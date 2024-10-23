@@ -14,14 +14,15 @@ st.set_page_config(
 def load_model():
     """Load the model and tokenizer once and cache them"""
     max_seq_length = 2048
-    dtype = None  # None for auto detection
-    load_in_4bit = True
+    dtype = torch.float32  # Explicitly set to float32 for CPU
+    load_in_4bit = False  # Disable 4-bit quantization for CPU
     
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name="lora_model",  # Replace with your local model path
         max_seq_length=max_seq_length,
         dtype=dtype,
         load_in_4bit=load_in_4bit,
+        device_map="cpu"  # Explicitly set device to CPU
     )
     
     FastLanguageModel.for_inference(model)  # Enable native 2x faster inference
@@ -40,6 +41,7 @@ def main():
         st.markdown("""
         This is a chat interface for the LoRA-fine-tuned model.
         Enter your message and press Enter or click the Send button to interact.
+        Running on CPU only.
         """)
         
         # Add model parameters
@@ -69,7 +71,7 @@ def main():
                 tokenize=True,
                 add_generation_prompt=True,
                 return_tensors="pt"
-            ).to("cuda" if torch.cuda.is_available() else "cpu")
+            ).to("cpu")  # Explicitly set to CPU
             
             # Create text streamer
             text_streamer = TextStreamer(tokenizer, skip_prompt=True)
@@ -113,7 +115,7 @@ def main():
         Please make sure:
         1. The model path is correct
         2. All required dependencies are installed
-        3. You have sufficient GPU memory (if using GPU)
+        3. You have sufficient system memory
         """)
 
 if __name__ == "__main__":
